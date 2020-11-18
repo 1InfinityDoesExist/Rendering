@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +22,9 @@ import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
 import com.template.render.exception.TemplateNotFoundException;
 import com.template.render.model.request.TemplateCreateRequest;
+import com.template.render.model.request.TemplateUpdateRequest;
 import com.template.render.model.response.TemplateCreateResponse;
+import com.template.render.model.response.TemplateUpdateResponse;
 import com.template.render.service.TemplateService;
 import com.template.render.util.Constants;
 
@@ -85,6 +88,24 @@ public class TemplateController {
 		try {
 			String response = templateService.deleteTemplate(id);
 			return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute(Constants.RESPONSE, response));
+		} catch (final InvalidInputException ex) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
+		} catch (final TemplateNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
+		}
+	}
+
+	@ApiImplicitParams({ @ApiImplicitParam(name = "id", paramType = "header") })
+	@PutMapping(value = "/update/{id}")
+	public ResponseEntity<ModelMap> updateTemplateById(@RequestBody TemplateUpdateRequest templateUpdateRequest,
+			@PathVariable(value = "id", required = true) String id) throws Exception {
+		try {
+			TemplateUpdateResponse templateUpdateResponse = templateService.updateTemplate(id, templateUpdateRequest);
+			return ResponseEntity.status(HttpStatus.OK)
+					.body(new ModelMap().addAttribute(Constants.MESSAGE, "Successfully updated")
+							.addAttribute(Constants.RESPONSE, templateUpdateResponse));
 		} catch (final InvalidInputException ex) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
