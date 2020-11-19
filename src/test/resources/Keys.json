@@ -1,0 +1,41 @@
+{
+	"data": {
+		"viaUrl": {
+			"status": "success",
+			"data": {
+				"id": "1",
+				"employee_name": "Tiger Nixon 12",
+				"employee_salary": "320800",
+				"employee_age": "614",
+				"profile_image": ""
+			}
+		},
+		"destData": {
+			"username": "Sai Patel 12",
+			"department": "JS",
+			"emailID": "PM@gmail.com",
+			"_id": "SaiKiran Tiwari"
+		},
+		"sourceData": [
+			{
+				"question": "which of the following is vowel ?",
+				"answer_options": [
+					"a",
+					"b",
+					"c"
+				]
+			},
+			{
+				"question": "What comes after w ?",
+				"answer_options": [
+					"x",
+					"y",
+					"z"
+				]
+			}
+		]
+	}
+}
+
+
+
