@@ -2,8 +2,6 @@ package com.template.render.controller;
 
 import java.util.List;
 
-import javax.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
@@ -33,7 +30,7 @@ import io.swagger.annotations.ApiImplicitParams;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping(path = "v1/template")
+@RequestMapping(value = "/v1/template")
 @Slf4j
 public class TemplateController {
 
@@ -41,7 +38,7 @@ public class TemplateController {
 	private TemplateService templateService;
 
 	@PostMapping(value = "/create", produces = "application/json", consumes = "application/json")
-	public ResponseEntity<ModelMap> persistTemplate(@Valid @RequestBody TemplateCreateRequest templateCreateRequest)
+	public ResponseEntity<ModelMap> persistTemplate(@RequestBody TemplateCreateRequest templateCreateRequest)
 			throws Exception {
 		log.info("::::::Inside TemplateController Class, persistTemplate method:::::");
 		try {
@@ -101,6 +98,7 @@ public class TemplateController {
 	@PutMapping(value = "/update/{id}")
 	public ResponseEntity<ModelMap> updateTemplateById(@RequestBody TemplateUpdateRequest templateUpdateRequest,
 			@PathVariable(value = "id", required = true) String id) throws Exception {
+		log.info(":::::Inside TemplateController Class, updateTemplateById method:::::");
 		try {
 			TemplateUpdateResponse templateUpdateResponse = templateService.updateTemplate(id, templateUpdateRequest);
 			return ResponseEntity.status(HttpStatus.OK)

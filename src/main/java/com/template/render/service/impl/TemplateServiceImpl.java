@@ -1,13 +1,16 @@
 package com.template.render.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
@@ -22,7 +25,10 @@ import com.template.render.model.response.TemplateUpdateResponseBuilder;
 import com.template.render.repository.TemplateRepository;
 import com.template.render.service.TemplateService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class TemplateServiceImpl implements TemplateService {
 
 	@Autowired
@@ -46,17 +52,17 @@ public class TemplateServiceImpl implements TemplateService {
 		template.setActive(true);
 		template.setAdditionalProperties(templateCreateRequest.getAdditionalProperties());
 		template.setCreatedAt(new Date());
-		template.setDefaultDate(templateCreateRequest.getDefaultDate());
+		template.setDefaultData(templateCreateRequest.getDefaultData());
 		template.setModifiedOn(new Date());
 		template.setName(templateCreateRequest.getName());
 		template.setSampleData(templateCreateRequest.getSampleData());
 		template.setTags(templateCreateRequest.getTags());
 		template.setTemplate(templateCreateRequest.getTemplate());
 		templateRepository.save(template);
-
+		log.info("Using builder design pattern to generate response");
 		// Builder Design Pattern
 		TemplateCreateResponse response = new TemplateCreateResponseBuilder().setId(template.getId())
-				.setName(template.getName()).getTemplateCreateResponse();
+				.setName(template.getName()).setActive(template.isActive()).getTemplateCreateResponse();
 		return response;
 	}
 
@@ -65,7 +71,7 @@ public class TemplateServiceImpl implements TemplateService {
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				return template;
 			}
@@ -84,7 +90,7 @@ public class TemplateServiceImpl implements TemplateService {
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				templateRepository.delete(template);
 				return "Successfully deleted";
@@ -98,21 +104,26 @@ public class TemplateServiceImpl implements TemplateService {
 	@Override
 	public TemplateUpdateResponse updateTemplate(String id, TemplateUpdateRequest templateUpdateRequest)
 			throws Exception {
+		log.info(":::::TemplateServiceImpl Class, updateTemplate method:::::");
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				JSONObject templateFromDB = (JSONObject) new JSONParser()
 						.parse(new ObjectMapper().writeValueAsString(template));
 				JSONObject templateFromPayload = (JSONObject) new JSONParser()
 						.parse(new ObjectMapper().writeValueAsString(templateUpdateRequest));
+				log.info(":::::db {}", templateFromDB);
+				log.info(":::payload {}", templateFromPayload);
 				for (Object object : templateFromPayload.keySet()) {
 					String param = (String) object;
+					log.info("::::::param {}", param);
 					templateFromDB.put(param, templateFromPayload.get(param));
 				}
-				template = new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class);
-				templateRepository.save(template);
+				Template newTemplate = new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class);
+				newTemplate.setModifiedOn(new Date());
+				templateRepository.save(newTemplate);
 				TemplateUpdateResponse response = new TemplateUpdateResponseBuilder().setId(template.getId())
 						.setModifiedOn(template.getModifiedOn()).getTemplateupdateResponse();
 				return response;
@@ -125,6 +136,41 @@ public class TemplateServiceImpl implements TemplateService {
 	@Override
 	public void processTemplate(String templateId) {
 		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public List<String> getAllKeys(Map<String, Object> data) {
+		List<String> keys = getKeys("", data, new ArrayList<String>());
+		return keys;
+	}
+
+	private List<String> getKeys(String parentKey, Map<String, Object> data, ArrayList<String> keys) {
+		log.info(":::::data : {} , parentKey : {}, keys : {}", data, parentKey, keys);
+		data.forEach((key, value) -> {
+			if (value instanceof Map) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> map = (Map<String, Object>) value;
+				getKeys(parentKey + key + ".", map, keys);
+			}
+			if (value instanceof List) {
+				List list = (List) value;
+				if (list.size() > 0) {
+					fillListData(parentKey, list, keys);
+				}
+			}
+			if (!parentKey.isEmpty()) {
+				keys.add(parentKey);
+				log.info("::parentKey is not empty:::keys {}", keys);
+			} else {
+				keys.add(parentKey + key);
+				log.info("::::parentKey is empty ::::keys {}", keys);
+			}
+		});
+		return keys;
+	}
+
+	private void fillListData(String parentKey, List list, ArrayList<String> keys) {
 
 	}
 

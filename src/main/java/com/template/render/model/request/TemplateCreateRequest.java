@@ -15,5 +15,5 @@ public class TemplateCreateRequest {
 	private String template;
 	private Map<String, Object> sampleData;
 	private Map<String, Object> additionalProperties;
-	private DefaultData defaultDate;
+	private DefaultData defaultData;
 }

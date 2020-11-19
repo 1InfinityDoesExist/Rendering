@@ -9,10 +9,10 @@ import com.template.render.entity.Template;
 @Repository
 public interface TemplateRepository extends MongoRepository<Template, String> {
 
-	@Query(value = "{'isActive':true}")
+	@Query(value = "{'isActive':true, 'id':?0}")
 	public Template findTemplateByName(String name);
 
-	@Query(value = "{'isActive':true}")
+	@Query(value = "{'isActive':true, 'id':?0}")
 	public Template findTemplateById(String id);
 
 }

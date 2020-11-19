@@ -4,11 +4,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.template.render.model.DefaultData;
 
+import lombok.Getter;
 import lombok.ToString;
 
-@ToString
+@Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TemplateUpdateResponse {
 	private String id;
 	private String name;
@@ -19,11 +22,11 @@ public class TemplateUpdateResponse {
 	private String template;
 	private Map<String, Object> sampleData;
 	private Map<String, Object> additionalProperties;
-	private DefaultData defaultDate;
+	private DefaultData defaultData;
 
 	public TemplateUpdateResponse(String id, String name, Date createdAt, Date modifiedOn, boolean isActive,
 			List<String> tags, String template, Map<String, Object> sampleData,
-			Map<String, Object> additionalProperties, DefaultData defaultDate) {
+			Map<String, Object> additionalProperties, DefaultData defaultData) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -34,7 +37,7 @@ public class TemplateUpdateResponse {
 		this.template = template;
 		this.sampleData = sampleData;
 		this.additionalProperties = additionalProperties;
-		this.defaultDate = defaultDate;
+		this.defaultData = defaultData;
 	}
 
 }
