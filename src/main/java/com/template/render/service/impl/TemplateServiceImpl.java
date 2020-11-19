@@ -8,6 +8,7 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
@@ -22,7 +23,10 @@ import com.template.render.model.response.TemplateUpdateResponseBuilder;
 import com.template.render.repository.TemplateRepository;
 import com.template.render.service.TemplateService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class TemplateServiceImpl implements TemplateService {
 
 	@Autowired
@@ -46,17 +50,17 @@ public class TemplateServiceImpl implements TemplateService {
 		template.setActive(true);
 		template.setAdditionalProperties(templateCreateRequest.getAdditionalProperties());
 		template.setCreatedAt(new Date());
-		template.setDefaultDate(templateCreateRequest.getDefaultDate());
+		template.setDefaultData(templateCreateRequest.getDefaultData());
 		template.setModifiedOn(new Date());
 		template.setName(templateCreateRequest.getName());
 		template.setSampleData(templateCreateRequest.getSampleData());
 		template.setTags(templateCreateRequest.getTags());
 		template.setTemplate(templateCreateRequest.getTemplate());
 		templateRepository.save(template);
-
+		log.info("Using builder design pattern to generate response");
 		// Builder Design Pattern
 		TemplateCreateResponse response = new TemplateCreateResponseBuilder().setId(template.getId())
-				.setName(template.getName()).getTemplateCreateResponse();
+				.setName(template.getName()).setActive(template.isActive()).getTemplateCreateResponse();
 		return response;
 	}
 
@@ -65,7 +69,7 @@ public class TemplateServiceImpl implements TemplateService {
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				return template;
 			}
@@ -84,7 +88,7 @@ public class TemplateServiceImpl implements TemplateService {
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				templateRepository.delete(template);
 				return "Successfully deleted";
@@ -98,10 +102,11 @@ public class TemplateServiceImpl implements TemplateService {
 	@Override
 	public TemplateUpdateResponse updateTemplate(String id, TemplateUpdateRequest templateUpdateRequest)
 			throws Exception {
+		log.info(":::::TemplateServiceImpl Class, updateTemplate method:::::");
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
-				throw new TemplateNotFoundException(String.format("Template with id : %s already exist.", id));
+				throw new TemplateNotFoundException(String.format("Template with id : %s does not exist.", id));
 			} else {
 				JSONObject templateFromDB = (JSONObject) new JSONParser()
 						.parse(new ObjectMapper().writeValueAsString(template));
@@ -111,10 +116,10 @@ public class TemplateServiceImpl implements TemplateService {
 					String param = (String) object;
 					templateFromDB.put(param, templateFromPayload.get(param));
 				}
-				template = new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class);
-				templateRepository.save(template);
+				templateRepository.save(new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class));
+				log.info("::::::After updating the data in db:::::");
 				TemplateUpdateResponse response = new TemplateUpdateResponseBuilder().setId(template.getId())
-						.setModifiedOn(template.getModifiedOn()).getTemplateupdateResponse();
+						.setModifiedOn(new Date()).getTemplateupdateResponse();
 				return response;
 			}
 		} else {

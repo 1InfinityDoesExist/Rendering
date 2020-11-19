@@ -16,7 +16,7 @@ public class TemplateCreateResponseBuilder {
 	private String template;
 	private Map<String, Object> sampleData;
 	private Map<String, Object> additionalProperties;
-	private DefaultData defaultDate;
+	private DefaultData defaultData;
 
 	public TemplateCreateResponseBuilder setName(String name) {
 		this.name = name;
@@ -43,8 +43,8 @@ public class TemplateCreateResponseBuilder {
 		return this;
 	}
 
-	public TemplateCreateResponseBuilder setDefaultDate(DefaultData defaultDate) {
-		this.defaultDate = defaultDate;
+	public TemplateCreateResponseBuilder setDefaultDate(DefaultData defaultData) {
+		this.defaultData = defaultData;
 		return this;
 	}
 
@@ -70,7 +70,7 @@ public class TemplateCreateResponseBuilder {
 
 	public TemplateCreateResponse getTemplateCreateResponse() {
 		return new TemplateCreateResponse(id, name, createdAt, modifiedOn, isActive, tags, template, sampleData,
-				additionalProperties, defaultDate);
+				additionalProperties, defaultData);
 	}
 
 }

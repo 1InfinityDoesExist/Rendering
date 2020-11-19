@@ -16,7 +16,7 @@ public class TemplateUpdateResponseBuilder {
 	private String template;
 	private Map<String, Object> sampleData;
 	private Map<String, Object> additionalProperties;
-	private DefaultData defaultDate;
+	private DefaultData defaultData;
 
 	public TemplateUpdateResponseBuilder setId(String id) {
 		this.id = id;
@@ -63,14 +63,14 @@ public class TemplateUpdateResponseBuilder {
 		return this;
 	}
 
-	public TemplateUpdateResponseBuilder setDefaultDate(DefaultData defaultDate) {
-		this.defaultDate = defaultDate;
+	public TemplateUpdateResponseBuilder setDefaultDate(DefaultData defaultData) {
+		this.defaultData = defaultData;
 		return this;
 	}
 
 	public TemplateUpdateResponse getTemplateupdateResponse() {
 		return new TemplateUpdateResponse(id, name, createdAt, modifiedOn, isActive, tags, template, sampleData,
-				additionalProperties, defaultDate);
+				additionalProperties, defaultData);
 	}
 
 }
