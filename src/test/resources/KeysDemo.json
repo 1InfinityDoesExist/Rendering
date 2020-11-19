@@ -1,0 +1,59 @@
+
+{
+	"viaUrl": {
+		"status": "success",
+		"data": {
+			"id": "1",
+			"employee_name": "Tiger Nixon 12",
+			"employee_salary": "320800",
+			"employee_age": "614",
+			"profile_image": ""
+		}
+	},
+	"destData": {
+		"username": "Json ",
+		"department": "JS",
+		"emailID": "json@gmail.com",
+		"_id": "Om Sai "
+	},
+	"sourceData": [
+		{
+			"question": "which of the following is vowel ?",
+			"answer_options": [
+				{
+					"a": {
+						"b": {
+							"c": "patel"
+						}
+					}
+				},
+				{
+					"d": {
+						"e": {
+							"f": "avinash"
+						}
+					}
+				}
+			]
+		},
+		{
+			"question": "which of the following is vowel ?",
+			"answer_options": [
+				{
+					"a": {
+						"b": {
+							"c": "patel"
+						}
+					}
+				},
+				{
+					"d": {
+						"e": {
+							"f": "avinash"
+						}
+					}
+				}
+			]
+		}
+	]
+}

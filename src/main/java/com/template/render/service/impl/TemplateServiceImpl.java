@@ -141,37 +141,45 @@ public class TemplateServiceImpl implements TemplateService {
 
 	@Override
 	public List<String> getAllKeys(Map<String, Object> data) {
+		log.info(":::::Template Service Class, getAllKeys method:::::");
 		List<String> keys = getKeys("", data, new ArrayList<String>());
+		log.info(":::::keys {}", keys);
 		return keys;
 	}
 
 	private List<String> getKeys(String parentKey, Map<String, Object> data, ArrayList<String> keys) {
-		log.info(":::::data : {} , parentKey : {}, keys : {}", data, parentKey, keys);
 		data.forEach((key, value) -> {
 			if (value instanceof Map) {
 				@SuppressWarnings("unchecked")
 				Map<String, Object> map = (Map<String, Object>) value;
 				getKeys(parentKey + key + ".", map, keys);
-			}
-			if (value instanceof List) {
+			} else if (value instanceof List) { // remove else if you want all the keys
 				List list = (List) value;
 				if (list.size() > 0) {
-					fillListData(parentKey, list, keys);
+					fillListData(parentKey + key, list, keys);
 				}
-			}
-			if (!parentKey.isEmpty()) {
-				keys.add(parentKey);
-				log.info("::parentKey is not empty:::keys {}", keys);
+			} else if (parentKey.isEmpty()) { // remove the else if you want all the keys
+				// keys.add(key); // uncomment this if you want all the keys
 			} else {
 				keys.add(parentKey + key);
-				log.info("::::parentKey is empty ::::keys {}", keys);
 			}
 		});
 		return keys;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void fillListData(String parentKey, List list, ArrayList<String> keys) {
-
+		for (int iter = 0; iter < list.size(); iter++) {
+			if (list.get(iter) instanceof List) {
+				List l = (List) (list.get(iter));
+				fillListData(parentKey + "[" + iter + "]" + ".", l, keys);
+			}
+			if (list.get(iter) instanceof Map) {
+				Map<String, Object> map = (Map<String, Object>) list.get(iter);
+				getKeys(parentKey + "[" + iter + "]" + ".", map, keys);
+			}
+		}
+		return;
 	}
 
 }

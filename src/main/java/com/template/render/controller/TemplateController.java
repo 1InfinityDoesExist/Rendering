@@ -1,6 +1,7 @@
 package com.template.render.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
@@ -111,5 +113,12 @@ public class TemplateController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND)
 					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
 		}
+	}
+
+	@PostMapping(value = "/keys")
+	public ResponseEntity<ModelMap> getAllKeys(@RequestBody Map data) {
+		log.info(":::::::Template Controller class, getAllKeys method::::");
+		List<String> keys = templateService.getAllKeys(data);
+		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute(Constants.RESPONSE, keys));
 	}
 }
