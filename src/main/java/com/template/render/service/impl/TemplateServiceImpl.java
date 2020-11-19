@@ -1,7 +1,9 @@
 package com.template.render.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -112,14 +114,18 @@ public class TemplateServiceImpl implements TemplateService {
 						.parse(new ObjectMapper().writeValueAsString(template));
 				JSONObject templateFromPayload = (JSONObject) new JSONParser()
 						.parse(new ObjectMapper().writeValueAsString(templateUpdateRequest));
+				log.info(":::::db {}", templateFromDB);
+				log.info(":::payload {}", templateFromPayload);
 				for (Object object : templateFromPayload.keySet()) {
 					String param = (String) object;
+					log.info("::::::param {}", param);
 					templateFromDB.put(param, templateFromPayload.get(param));
 				}
-				templateRepository.save(new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class));
-				log.info("::::::After updating the data in db:::::");
+				Template newTemplate = new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class);
+				newTemplate.setModifiedOn(new Date());
+				templateRepository.save(newTemplate);
 				TemplateUpdateResponse response = new TemplateUpdateResponseBuilder().setId(template.getId())
-						.setModifiedOn(new Date()).getTemplateupdateResponse();
+						.setModifiedOn(template.getModifiedOn()).getTemplateupdateResponse();
 				return response;
 			}
 		} else {
@@ -130,6 +136,41 @@ public class TemplateServiceImpl implements TemplateService {
 	@Override
 	public void processTemplate(String templateId) {
 		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public List<String> getAllKeys(Map<String, Object> data) {
+		List<String> keys = getKeys("", data, new ArrayList<String>());
+		return keys;
+	}
+
+	private List<String> getKeys(String parentKey, Map<String, Object> data, ArrayList<String> keys) {
+		log.info(":::::data : {} , parentKey : {}, keys : {}", data, parentKey, keys);
+		data.forEach((key, value) -> {
+			if (value instanceof Map) {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> map = (Map<String, Object>) value;
+				getKeys(parentKey + key + ".", map, keys);
+			}
+			if (value instanceof List) {
+				List list = (List) value;
+				if (list.size() > 0) {
+					fillListData(parentKey, list, keys);
+				}
+			}
+			if (!parentKey.isEmpty()) {
+				keys.add(parentKey);
+				log.info("::parentKey is not empty:::keys {}", keys);
+			} else {
+				keys.add(parentKey + key);
+				log.info("::::parentKey is empty ::::keys {}", keys);
+			}
+		});
+		return keys;
+	}
+
+	private void fillListData(String parentKey, List list, ArrayList<String> keys) {
 
 	}
 

@@ -1,7 +1,10 @@
 package com.template.render.service;
 
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Component;
+
 import com.template.render.entity.Template;
 import com.template.render.model.request.TemplateCreateRequest;
 import com.template.render.model.request.TemplateUpdateRequest;
@@ -23,5 +26,7 @@ public interface TemplateService {
 			throws Exception;
 
 	public void processTemplate(String templateId);
+
+	public List<String> getAllKeys(Map<String, Object> data);
 
 }
