@@ -5,7 +5,9 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.template.render.entity.Template;
+import com.template.render.model.DefaultData;
 import com.template.render.model.request.TemplateCreateRequest;
 import com.template.render.model.request.TemplateUpdateRequest;
 import com.template.render.model.response.TemplateCreateResponse;
@@ -28,5 +30,7 @@ public interface TemplateService {
 	public void processTemplate(String templateId);
 
 	public List<String> getAllKeys(Map<String, Object> data);
+
+	public JsonNode getFinalDataForProcessing(Template template, DefaultData defaultData);
 
 }
