@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
 import com.template.render.exception.TemplateNotFoundException;
+import com.template.render.model.DefaultData;
 import com.template.render.model.request.TemplateCreateRequest;
 import com.template.render.model.request.TemplateUpdateRequest;
 import com.template.render.model.response.TemplateCreateResponse;
@@ -118,7 +120,42 @@ public class TemplateController {
 	@PostMapping(value = "/keys")
 	public ResponseEntity<ModelMap> getAllKeys(@RequestBody Map data) {
 		log.info(":::::::Template Controller class, getAllKeys method::::");
+		@SuppressWarnings("unchecked")
 		List<String> keys = templateService.getAllKeys(data);
 		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute(Constants.RESPONSE, keys));
+	}
+
+	/*
+	 * Divide the process of template in 3 parts 1. Retrieve Template 2. Prepare
+	 * data thats gonna be rendered. 2. Then finally send the template for
+	 * processing with the prepared data
+	 */
+	@ApiImplicitParams({ @ApiImplicitParam(name = "id", paramType = "header") })
+	@PostMapping(value = "/process/{id}")
+	public ResponseEntity<ModelMap> processTemplate(@PathVariable(value = "id", required = true) String id,
+			@RequestBody DefaultData defaultData) throws Exception {
+		try {
+			/*
+			 * Retrieve template from db that needs to be rendered
+			 */
+			Template template = templateService.getTemplateById(id);
+
+			/*
+			 * Prepare final data for processing
+			 */
+			JsonNode jsonNode = templateService.getFinalDataForProcessing(template, defaultData);
+			/*
+			 * Send the template for processing
+			 */
+
+			return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute(Constants.RESPONSE, ""));
+		} catch (final InvalidInputException ex) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
+		} catch (final TemplateNotFoundException ex) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
+		}
+
 	}
 }

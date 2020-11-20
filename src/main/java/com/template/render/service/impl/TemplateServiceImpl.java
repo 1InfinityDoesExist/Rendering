@@ -2,20 +2,34 @@ package com.template.render.service.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
 import com.template.render.exception.TemplateNotFoundException;
+import com.template.render.model.DefaultData;
+import com.template.render.model.URLKeyValue;
 import com.template.render.model.request.TemplateCreateRequest;
 import com.template.render.model.request.TemplateUpdateRequest;
 import com.template.render.model.response.TemplateCreateResponse;
@@ -33,6 +47,9 @@ public class TemplateServiceImpl implements TemplateService {
 
 	@Autowired
 	private TemplateRepository templateRepository;
+
+	@Autowired
+	private RestTemplate restTemplate;
 
 	@Override
 	public TemplateCreateResponse createTemplate(TemplateCreateRequest templateCreateRequest) throws Exception {
@@ -182,4 +199,100 @@ public class TemplateServiceImpl implements TemplateService {
 		return;
 	}
 
+	/*
+	 * Prepare final data for processing
+	 */
+	@Override
+	public JsonNode getFinalDataForProcessing(Template template, DefaultData input) {
+
+		Map<String, Object> dataForProcessing = null;
+		if (!ObjectUtils.isEmpty(input) && !ObjectUtils.isEmpty(input.getDefData())) {
+			dataForProcessing = input.getDefData();
+		} else if (!ObjectUtils.isEmpty(template.getDefaultData())
+				&& !ObjectUtils.isEmpty(template.getDefaultData().getDefData())) {
+			dataForProcessing = template.getDefaultData().getDefData();
+		}
+		if (dataForProcessing == null) {
+			dataForProcessing = new HashMap<String, Object>();
+		}
+		ObjectNode finalNode = new ObjectMapper().valueToTree(dataForProcessing);
+
+		/*
+		 * Fill finalNode data with value obtained from url.
+		 */
+
+		if (!ObjectUtils.isEmpty(input) && !ObjectUtils.isEmpty(input.getUrlKeyValue())) {
+			fillFinalData(finalNode, input.getUrlKeyValue());
+		} else if (!ObjectUtils.isEmpty(template.getDefaultData())
+				&& !ObjectUtils.isEmpty(template.getDefaultData().getUrlKeyValue())) {
+			fillFinalData(finalNode, template.getDefaultData().getUrlKeyValue());
+		}
+		log.info(":::::FinalNode from main service method {}", finalNode);
+		return finalNode;
+	}
+
+	/*
+	 * 
+	 * Fetch data from the given url and send inserting data into the respective key
+	 */
+	private void fillFinalData(ObjectNode finalNode, List<URLKeyValue> urlKeyValue) {
+		for (URLKeyValue urlKV : urlKeyValue) {
+			String key = urlKV.getKey();
+			String url = urlKV.getValue();
+			MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+			HttpEntity entity = new HttpEntity<>(headers);
+			ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+			String urlValue = response.getBody();
+			log.info(":::::urlValue {}", urlValue);
+			try {
+				setAndGetFinalNode(key, finalNode, new ObjectMapper().readTree(urlValue));
+			} catch (JsonMappingException e) {
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/*
+	 * Set the value obtained form the link provided
+	 */
+	@SuppressWarnings("deprecation")
+	private void setAndGetFinalNode(String key, ObjectNode finalNode, JsonNode readTree) {
+		if (!StringUtils.isEmpty(key)) {
+			String[] nodes = key.split("\\.");
+			ObjectNode currentNode = finalNode;
+			/*
+			 * Creates a new one
+			 */
+			if (nodes.length > 0 && currentNode.get(nodes[0]) == null) { // to be updated p.x.y.z payload has only x.y.k
+				for (int iter = 0; iter < nodes.length - 1; iter++) {
+					String node = nodes[iter];
+					if (!currentNode.isNull() && !currentNode.isEmpty() && currentNode.get(node) != null) {
+						currentNode = (ObjectNode) currentNode.get(node);
+					} else {
+						currentNode.set(node, new ObjectMapper().createObjectNode());
+						currentNode = (ObjectNode) currentNode.get(node);
+					}
+				}
+				currentNode.set(nodes[nodes.length - 1], readTree);
+				/*
+				 * Updates in the existing value
+				 */
+			} else { // to be updated x.y.z.k payload x.y
+				for (int iter = 0; iter < nodes.length - 1; iter++) {
+					String node = nodes[iter];
+					if (!currentNode.isNull() && !currentNode.isEmpty() && !currentNode.get(node).isNull()) {
+						currentNode = (ObjectNode) currentNode.get(node);
+					} else {
+						currentNode.set(node, new ObjectMapper().createObjectNode());
+						currentNode = (ObjectNode) currentNode.get(node);
+					}
+				}
+				currentNode.set(nodes[nodes.length - 1], readTree);
+			}
+
+		}
+		log.info(":::::finalNode {}", finalNode);
+	}
 }
