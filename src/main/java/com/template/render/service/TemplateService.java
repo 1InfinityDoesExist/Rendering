@@ -37,4 +37,6 @@ public interface TemplateService {
 
 	public Map<Integer, List<Template>> getPagedTemplate();
 
+	public List<Template> getTemplateBasedOnTags(List<String> tags);
+
 }
