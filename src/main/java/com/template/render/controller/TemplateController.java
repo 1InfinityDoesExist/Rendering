@@ -162,4 +162,11 @@ public class TemplateController {
 
 	}
 
+	@GetMapping(value = "/pageable/get")
+	public ResponseEntity<ModelMap> getAllTemplate() {
+
+		Map<Integer, List<Template>> listOfPagedTemplate = templateService.getPagedTemplate();
+		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute("response", listOfPagedTemplate));
+	}
+
 }
