@@ -148,7 +148,10 @@ public class TemplateController {
 			 * Send the template for processing
 			 */
 
-			return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute(Constants.RESPONSE, ""));
+			String output = templateService.processTemplate(template, jsonNode);
+
+			return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute("templateId", id)
+					.addAttribute("finalData", jsonNode).addAttribute("ProcessedTemplate", output));
 		} catch (final InvalidInputException ex) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body(new ModelMap().addAttribute(Constants.ERROR_MESSAGE, ex.getMessage()));
@@ -158,4 +161,5 @@ public class TemplateController {
 		}
 
 	}
+
 }

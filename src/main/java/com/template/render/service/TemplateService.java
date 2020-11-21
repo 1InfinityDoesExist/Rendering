@@ -33,4 +33,6 @@ public interface TemplateService {
 
 	public JsonNode getFinalDataForProcessing(Template template, DefaultData defaultData);
 
+	public String processTemplate(Template template, JsonNode jsonNode) throws Exception;
+
 }
