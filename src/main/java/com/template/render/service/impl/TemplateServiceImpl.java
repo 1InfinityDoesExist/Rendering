@@ -10,8 +10,10 @@ import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -24,10 +26,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Objects;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
 import com.template.render.exception.TemplateNotFoundException;
+import com.template.render.exception.UnableToProcessTemplate;
 import com.template.render.model.DefaultData;
 import com.template.render.model.URLKeyValue;
 import com.template.render.model.request.TemplateCreateRequest;
@@ -44,6 +48,17 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class TemplateServiceImpl implements TemplateService {
+
+	@Value("${node.server.url:http://localhost:4000/process}")
+	private String nodeUrl;
+
+	private final String STARTTAG = "<patelmagic>";
+
+	private final int STARTTAG_LENGTH = STARTTAG.length();
+
+	private final String ENDTAG = "</patelmagic>";
+
+	private final int ENDTAG_LENGTH = ENDTAG.length();
 
 	@Autowired
 	private TemplateRepository templateRepository;
@@ -294,5 +309,25 @@ public class TemplateServiceImpl implements TemplateService {
 
 		}
 		log.info(":::::finalNode {}", finalNode);
+	}
+
+	@Override
+	public String processTemplate(Template template, JsonNode data) throws Exception {
+
+		Map<String, Object> request = new HashMap<String, Object>();
+		request.put("template", STARTTAG + template.getTemplate() + ENDTAG);
+		request.put("data", data);
+
+		MultiValueMap<String, String> multiValueMap = new LinkedMultiValueMap<String, String>();
+		multiValueMap.add("Content-Type", "application/json");
+
+		ResponseEntity<String> nodeResponse = restTemplate.exchange(nodeUrl, HttpMethod.POST,
+				new HttpEntity<>(request, multiValueMap), String.class);
+		if (!Objects.equal(nodeResponse.getStatusCode(), HttpStatus.OK)) {
+			throw new UnableToProcessTemplate("Unable to process the template.");
+		}
+		String body = nodeResponse.getBody();
+		return body.substring(STARTTAG_LENGTH + 1, body.length() - ENDTAG_LENGTH);
+
 	}
 }
