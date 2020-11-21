@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
@@ -272,7 +274,6 @@ public class TemplateServiceImpl implements TemplateService {
 	/*
 	 * Set the value obtained form the link provided
 	 */
-	@SuppressWarnings("deprecation")
 	private void setAndGetFinalNode(String key, ObjectNode finalNode, JsonNode readTree) {
 		if (!StringUtils.isEmpty(key)) {
 			String[] nodes = key.split("\\.");
@@ -328,6 +329,26 @@ public class TemplateServiceImpl implements TemplateService {
 		}
 		String body = nodeResponse.getBody();
 		return body.substring(STARTTAG_LENGTH + 1, body.length() - ENDTAG_LENGTH);
+
+	}
+
+	/*
+	 * Get All the template based on pagination
+	 */
+	@Override
+	public Map<Integer, List<Template>> getPagedTemplate() {
+		List<Template> listOfTemplate = templateRepository.findAll();
+		Map<Integer, List<Template>> pagedTemplate = null;
+		if (!listOfTemplate.isEmpty()) {
+			pagedTemplate = pageTemplateData(listOfTemplate, 5);
+			return pagedTemplate;
+		}
+		return pagedTemplate;
+	}
+
+	private Map<Integer, List<Template>> pageTemplateData(List<Template> list, int pageSize) {
+		return IntStream.iterate(0, i -> i + pageSize).limit((list.size() + pageSize - 1) / pageSize).boxed().collect(
+				Collectors.toMap(i -> i / pageSize, i -> list.subList(i, Math.min(i + pageSize, list.size()))));
 
 	}
 }

@@ -35,4 +35,6 @@ public interface TemplateService {
 
 	public String processTemplate(Template template, JsonNode jsonNode) throws Exception;
 
+	public Map<Integer, List<Template>> getPagedTemplate();
+
 }
