@@ -351,4 +351,12 @@ public class TemplateServiceImpl implements TemplateService {
 				Collectors.toMap(i -> i / pageSize, i -> list.subList(i, Math.min(i + pageSize, list.size()))));
 
 	}
+
+	@Override
+	public List<Template> getTemplateBasedOnTags(List<String> tags) {
+		return templateRepository.findAll().stream().filter(template -> {
+			return (template.getTags() == null || template.getTags().isEmpty()) ? false
+					: template.getTags().containsAll(tags);
+		}).collect(Collectors.toList());
+	}
 }

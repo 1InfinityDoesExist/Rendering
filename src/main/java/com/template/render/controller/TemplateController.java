@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -164,9 +165,16 @@ public class TemplateController {
 
 	@GetMapping(value = "/pageable/get")
 	public ResponseEntity<ModelMap> getAllTemplate() {
-
 		Map<Integer, List<Template>> listOfPagedTemplate = templateService.getPagedTemplate();
 		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute("response", listOfPagedTemplate));
+	}
+
+	@GetMapping(value = "/get/tageBased")
+	public ResponseEntity<ModelMap> getAllTemplateBasedOnTags(
+			@RequestParam(value = "tags", required = true) List<String> tags) {
+
+		List<Template> listOfTemplate = templateService.getTemplateBasedOnTags(tags);
+		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute("response", listOfTemplate));
 	}
 
 }
