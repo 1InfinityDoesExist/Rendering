@@ -172,7 +172,6 @@ public class TemplateController {
 	@GetMapping(value = "/get/tageBased")
 	public ResponseEntity<ModelMap> getAllTemplateBasedOnTags(
 			@RequestParam(value = "tags", required = true) List<String> tags) {
-
 		List<Template> listOfTemplate = templateService.getTemplateBasedOnTags(tags);
 		return ResponseEntity.status(HttpStatus.OK).body(new ModelMap().addAttribute("response", listOfTemplate));
 	}
