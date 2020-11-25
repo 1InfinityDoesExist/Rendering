@@ -27,8 +27,6 @@ public interface TemplateService {
 	public TemplateUpdateResponse updateTemplate(String id, TemplateUpdateRequest templateUpdateRequest)
 			throws Exception;
 
-	public void processTemplate(String templateId);
-
 	public List<String> getAllKeys(Map<String, Object> data);
 
 	public JsonNode getFinalDataForProcessing(Template template, DefaultData defaultData);

@@ -12,7 +12,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.template.render.model.DefaultData;
 
+import lombok.EqualsAndHashCode;
+
 @lombok.Data
+@EqualsAndHashCode
 @Document(collection = "render")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Template implements Serializable {
