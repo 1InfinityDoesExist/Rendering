@@ -8,11 +8,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -49,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@CacheConfig(cacheNames = { "templateCache" })
 public class TemplateServiceImpl implements TemplateService {
 
 	@Value("${node.server.url:http://localhost:4000/process}")
@@ -68,8 +77,27 @@ public class TemplateServiceImpl implements TemplateService {
 	@Autowired
 	private RestTemplate restTemplate;
 
+	private Cache cache;
+
+	private CacheManager cacheManager;
+
+	@Autowired
+	public TemplateServiceImpl(CacheManager cacheManager) {
+		this.cacheManager = cacheManager;
+	}
+
+	@PostConstruct
+	public void init() {
+		log.info("--------Post construct called.--------");
+		cache = cacheManager.getCache("templateCache");
+		com.github.benmanes.caffeine.cache.Cache nativeCache = (com.github.benmanes.caffeine.cache.Cache) cache
+				.getNativeCache();
+		log.info("::nativeCache {}", nativeCache.stats().toString());
+	}
+
 	@Override
 	public TemplateCreateResponse createTemplate(TemplateCreateRequest templateCreateRequest) throws Exception {
+		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		Template template;
 		if (!ObjectUtils.isEmpty(templateCreateRequest)) {
 			if (!ObjectUtils.isEmpty(templateCreateRequest.getName())) {
@@ -93,6 +121,8 @@ public class TemplateServiceImpl implements TemplateService {
 		template.setTags(templateCreateRequest.getTags());
 		template.setTemplate(templateCreateRequest.getTemplate());
 		templateRepository.save(template);
+		cache.put(template.getId(), template);
+		log.info("::::cache {}", cache.get(template.getId(), Template.class));
 		log.info("Using builder design pattern to generate response");
 		// Builder Design Pattern
 		TemplateCreateResponse response = new TemplateCreateResponseBuilder().setId(template.getId())
@@ -100,8 +130,12 @@ public class TemplateServiceImpl implements TemplateService {
 		return response;
 	}
 
+	@Cacheable(value = "templateCache", key = "#id", unless = "#result == null")
 	@Override
 	public Template getTemplateById(String id) throws Exception {
+		log.info(":::::TemplateServiceImpl Class, getTemplateById method:::::");
+		log.info(":::::id {}", id);
+		log.info("::::cache {}", cache.get(id, Template.class));
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
@@ -114,13 +148,17 @@ public class TemplateServiceImpl implements TemplateService {
 		}
 	}
 
+	@Cacheable(value = "templateCache", unless = "#result.size > 2")
 	@Override
 	public List<Template> getAllTemplate() {
+		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		return templateRepository.findAll();
 	}
 
+	@CacheEvict(key = "#id")
 	@Override
 	public String deleteTemplate(String id) throws Exception {
+		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
@@ -138,7 +176,9 @@ public class TemplateServiceImpl implements TemplateService {
 	@Override
 	public TemplateUpdateResponse updateTemplate(String id, TemplateUpdateRequest templateUpdateRequest)
 			throws Exception {
+		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		log.info(":::::TemplateServiceImpl Class, updateTemplate method:::::");
+		cache.evictIfPresent(id); // clear cache for this id
 		if (!ObjectUtils.isEmpty(id)) {
 			Template template = templateRepository.findTemplateById(id);
 			if (ObjectUtils.isEmpty(template)) {
@@ -158,6 +198,7 @@ public class TemplateServiceImpl implements TemplateService {
 				Template newTemplate = new ObjectMapper().readValue(templateFromDB.toJSONString(), Template.class);
 				newTemplate.setModifiedOn(new Date());
 				templateRepository.save(newTemplate);
+				cache.putIfAbsent(id, newTemplate);
 				TemplateUpdateResponse response = new TemplateUpdateResponseBuilder().setId(template.getId())
 						.setModifiedOn(template.getModifiedOn()).getTemplateupdateResponse();
 				return response;
@@ -167,14 +208,10 @@ public class TemplateServiceImpl implements TemplateService {
 		}
 	}
 
-	@Override
-	public void processTemplate(String templateId) {
-		// TODO Auto-generated method stub
-
-	}
-
+	@Cacheable(value = "templateCache", key = "#data")
 	@Override
 	public List<String> getAllKeys(Map<String, Object> data) {
+		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		log.info(":::::Template Service Class, getAllKeys method:::::");
 		List<String> keys = getKeys("", data, new ArrayList<String>());
 		log.info(":::::keys {}", keys);
