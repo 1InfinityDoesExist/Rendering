@@ -44,7 +44,7 @@ public class CacheConfig {
 
 	public Caffeine<Object, Object> caffeineCacheBuilder() {
 		return Caffeine.newBuilder().initialCapacity(100).maximumSize(500).expireAfterAccess(5, TimeUnit.MINUTES)
-				.weakKeys().recordStats().removalListener(new CustomRemovalListener());
+				.expireAfterWrite(5, TimeUnit.MINUTES).recordStats().removalListener(new CustomRemovalListener());
 	}
 
 }
