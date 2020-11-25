@@ -14,12 +14,12 @@ import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -148,14 +148,14 @@ public class TemplateServiceImpl implements TemplateService {
 		}
 	}
 
-	@Cacheable(value = "templateCache", unless = "#result.size > 2")
+	@CachePut(value = "templateCache")
 	@Override
 	public List<Template> getAllTemplate() {
 		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
 		return templateRepository.findAll();
 	}
 
-	@CacheEvict(key = "#id")
+	@CacheEvict(key = "#id", allEntries = true)
 	@Override
 	public String deleteTemplate(String id) throws Exception {
 		log.info(":::::Cache Manager {}", cacheManager.getCacheNames());
