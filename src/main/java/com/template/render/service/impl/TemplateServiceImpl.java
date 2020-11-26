@@ -21,6 +21,9 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -37,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Objects;
+import com.mongodb.BasicDBObject;
 import com.template.render.entity.Template;
 import com.template.render.exception.InvalidInputException;
 import com.template.render.exception.TemplateAlreadyExistException;
@@ -50,7 +54,8 @@ import com.template.render.model.response.TemplateCreateResponse;
 import com.template.render.model.response.TemplateCreateResponseBuilder;
 import com.template.render.model.response.TemplateUpdateResponse;
 import com.template.render.model.response.TemplateUpdateResponseBuilder;
-import com.template.render.repository.TemplateRepository;
+import com.template.render.query.TemplateQueryBuilder;
+import com.template.render.repository.mongo.TemplateRepository;
 import com.template.render.service.TemplateService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +78,9 @@ public class TemplateServiceImpl implements TemplateService {
 
 	@Autowired
 	private TemplateRepository templateRepository;
+
+	@Autowired
+	private MongoTemplate mongoTemplate;
 
 	@Autowired
 	private RestTemplate restTemplate;
@@ -396,4 +404,5 @@ public class TemplateServiceImpl implements TemplateService {
 					: template.getTags().containsAll(tags);
 		}).collect(Collectors.toList());
 	}
+
 }
